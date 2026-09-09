@@ -134,3 +134,6 @@ df.to_sql(
 
 print("\nTable created successfully!")
 print("Data inserted successfully!")
+
+7. -- connect powerbi with postgres 
+server - localhost:5432 DB - powerbi_db
