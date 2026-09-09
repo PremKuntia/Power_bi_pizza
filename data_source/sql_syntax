@@ -1,1 +1,8 @@
+1. -- Create User for power_bi 
+create user powerbi_user with Login password 'power_bi_2026'
+2. -- checking role of that user 
+select rolname, rolcanlogin, rolsuper from pg_roles where rolname = 'powerbi_user'
+3. -- creating db and giving ownership
+ create database powerbi_db owner 'powerbi_user'
+4. -- Creating a connection / catalog
 
