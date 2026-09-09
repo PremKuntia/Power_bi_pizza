@@ -137,3 +137,33 @@ print("Data inserted successfully!")
 
 7. -- connect powerbi with postgres 
 server - localhost:5432 DB - powerbi_db
+
+8 -- power query part 
+ -- replace the values in power query in the same column 
+= Table.TransformColumns(
+    #"Expanded Data",    comment - here Expanded Data is the previous step in the Applied Step
+    {
+        {
+            "Data.pizza_size",
+            each
+                if _ = "S" then "Regular"
+                else if _ = "M" then "Medium"
+                else if _ = "L" then "Large"
+                else if _ = "XL" then "Extra Large"
+                else if _ = "XXL" then "Double Extra Large"
+                else _,
+            type text
+        }
+    }
+)
+-- in a new custom column
+if [pizza_size] = "S" then "Small"
+else if [pizza_size] = "M" then "Medium"
+else if [pizza_size] = "L" then "Large"
+else if [pizza_size] = "XL" then "Extra Large"
+else [pizza_size]
+
+9 -- creating new measures for KPIs (total price)
+Total Revenue = sum('public pizza_sales'[Data.total_price])
+Total Orders = distinctcount('public pizza_sales'[Data.order_id])
+Average Revenue = [Total Revenue]/[Total Orders]
