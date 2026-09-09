@@ -6,3 +6,131 @@ select rolname, rolcanlogin, rolsuper from pg_roles where rolname = 'powerbi_use
  create database powerbi_db owner 'powerbi_user'
 4. -- Creating a connection / catalog
 
+5. -- Reading the excel file in python 
+import pandas as pd
+
+url = "https://raw.githubusercontent.com/PremKuntia/Power_bi_pizza/main/data_source/pizza_sales_excel_file.xlsx"
+
+df = pd.read_excel(url, engine="openpyxl")
+
+print(df.head(5))
+print("\nData types:")
+print(df.dtypes)
+
+6. -- creating table and data insertion in that table
+
+import pandas as pd
+from sqlalchemy import create_engine
+from sqlalchemy.types import (
+    Integer,
+    String,
+    Date,
+    Time,
+    Numeric,
+    Text
+)
+
+# -----------------------------------
+# 1. Read Excel from GitHub
+# -----------------------------------
+
+url = "https://raw.githubusercontent.com/PremKuntia/Power_bi_pizza/main/data_source/pizza_sales_excel_file.xlsx"
+
+df = pd.read_excel(url, engine="openpyxl")
+
+print("Excel data:")
+print(df.head())
+
+print("\nColumns:")
+print(df.columns.tolist())
+
+print("\nOriginal data types:")
+print(df.dtypes)
+
+
+# -----------------------------------
+# 2. Convert columns to correct types
+# -----------------------------------
+
+df["pizza_id"] = pd.to_numeric(df["pizza_id"], errors="coerce")
+df["order_id"] = pd.to_numeric(df["order_id"], errors="coerce")
+df["quantity"] = pd.to_numeric(df["quantity"], errors="coerce")
+
+df["order_date"] = pd.to_datetime(
+    df["order_date"],
+    errors="coerce"
+).dt.date
+
+df["order_time"] = pd.to_datetime(
+    df["order_time"].astype(str),
+    format="%H:%M:%S",
+    errors="coerce"
+).dt.time
+
+df["unit_price"] = pd.to_numeric(
+    df["unit_price"],
+    errors="coerce"
+)
+
+df["total_price"] = pd.to_numeric(
+    df["total_price"],
+    errors="coerce"
+)
+
+
+# -----------------------------------
+# 3. Check final data types
+# -----------------------------------
+
+print("\nFinal data types:")
+print(df.dtypes)
+
+print("\nNull values:")
+print(df.isnull().sum())
+
+
+# -----------------------------------
+# 4. Connect to PostgreSQL
+# -----------------------------------
+username = "powerbi_user"
+password = "power_bi_2026"
+engine = create_engine(
+    f"postgresql+psycopg2://{username}:{password}@localhost:5432/powerbi_db"
+)
+
+
+# -----------------------------------
+# 5. Define PostgreSQL data types
+# -----------------------------------
+
+postgres_types = {
+    "pizza_id": Integer(),
+    "order_id": Integer(),
+    "pizza_name_id": String(50),
+    "quantity": Integer(),
+    "order_date": Date(),
+    "order_time": Time(),
+    "unit_price": Numeric(10, 2),
+    "total_price": Numeric(10, 2),
+    "pizza_size": String(10),
+    "pizza_category": String(50),
+    "pizza_ingredients": Text(),
+    "pizza_name": String(150)
+}
+
+
+# -----------------------------------
+# 6. Create table + insert data
+# -----------------------------------
+
+df.to_sql(
+    name="pizza_sales",
+    con=engine,
+    schema="public",
+    if_exists="replace",
+    index=False,
+    dtype=postgres_types
+)
+
+print("\nTable created successfully!")
+print("Data inserted successfully!")
